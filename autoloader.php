@@ -1,24 +1,31 @@
 <?php
-spl_autoload_register(function($class_name) {
-    $namespace_prefix = 'MWST\\';
-    $base_dir = plugin_dir_path(__FILE__) . '';
+spl_autoload_register(function ($class) {
+    $prefix = 'MWST\\';
+    $base_dir = plugin_dir_path(__FILE__);
 
-    $len = strlen($namespace_prefix);
-    if (strncmp($namespace_prefix, $class_name, $len) !== 0) {
+    // Does the class use the namespace prefix?
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        // no, move to next registered autoloader
         return;
     }
 
-    $relative_class = substr($class_name, $len);
+    // Get the relative class name
+    $relative_class = substr($class, $len);
 
-    $file = strtolower(str_replace('_', '-', $relative_class));
+    // Replace namespace separators with directory separators in the relative class name,
+    // append with .php
+    $file = $base_dir . str_replace('\\', DIRECTORY_SEPARATOR, $relative_class) . '.php';
 
-    $paths = explode("\\", $file);
+    // Replace underscores with dashes only in the filename part (optional, if your files use dashes)
+    // For example, convert 'Shipping_Method' => 'Shipping-Method.php'
+    // Split path into directories + filename
+    $path_parts = pathinfo($file);
+    $filename = str_replace('_', '-', $path_parts['basename']);
+    $file = $path_parts['dirname'] . DIRECTORY_SEPARATOR . $filename;
 
-    $updated_file = implode("/", $paths);
-
-    $updated_file = $base_dir . str_replace('\\', '/', $updated_file) . '.php';
-
-    if (file_exists($updated_file)) {
-        require_once $updated_file;
+    // Finally, include the file if it exists
+    if (file_exists($file)) {
+        require_once $file;
     }
 });
